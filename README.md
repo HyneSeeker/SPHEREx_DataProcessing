@@ -6,14 +6,40 @@ The tool is intentionally date-driven: the user provides one UT observing date, 
 
 ## Current Scope
 
-This package currently processes **SPHEREx band 1 only**. The He I wavelength grid and Gaussian fitting window are the ones inherited from the original band 1 analysis scripts:
+This package currently processes **SPHEREx band 1 only** because the metastable helium line targeted by this workflow lies in band 1. The wavelength grid and Gaussian fitting window are therefore fixed to the band 1 analysis setup:
 
 ```text
 wavelength range: 0.734-1.116 um
 fit window:       1.06-1.11 um
 ```
 
-Other SPHEREx bands are not exposed as a command-line option because they would need their own wavelength grid and fitting window before the resulting intensity plot can be interpreted safely.
+Other SPHEREx bands are not exposed as command-line options because they do not contain this metastable helium feature for the present analysis goal.
+
+## Repository Structure
+
+```text
+.
+|-- README.md
+|-- pyproject.toml
+|-- src/
+|   `-- spherex_helium/
+|       |-- __init__.py
+|       |-- classification.py
+|       |-- cli.py
+|       |-- discovery.py
+|       |-- fitsio.py
+|       |-- horizons.py
+|       |-- pipeline.py
+|       |-- plotting.py
+|       |-- processing.py
+|       |-- timeutils.py
+|       `-- types.py
+`-- tests/
+    |-- test_core.py
+    `-- test_pipeline_local.py
+```
+
+The source code follows the standard `src/` package layout. Runtime outputs, local build artifacts, Python caches, generated plots, and generated CSV files are intentionally excluded from Git by `.gitignore`.
 
 ## Installation
 
