@@ -39,7 +39,7 @@ Other SPHEREx bands are not exposed as command-line options because they do not 
     `-- test_pipeline_local.py
 ```
 
-The source code follows the standard `src/` package layout. Runtime outputs, local build artifacts, Python caches, generated plots, and generated CSV files are intentionally excluded from Git by `.gitignore`.
+The source code follows the standard `src/` package layout. 
 
 ## Installation
 
