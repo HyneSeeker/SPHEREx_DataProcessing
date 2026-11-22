@@ -17,9 +17,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("-o", "--output", type=Path, help="Output PNG path.")
     parser.add_argument(
         "--data-source",
-        choices=("auto", "local", "s3-prefix", "manifest", "sia"),
+        choices=("auto", "current", "local", "s3-prefix", "manifest", "sia"),
         default="auto",
-        help="How to find SPHEREx FITS files. Default: auto via public S3 date discovery.",
+        help="Use current for DR1 + QR3 via S3; auto retains the legacy QR2 S3 default.",
     )
     parser.add_argument("--local-dir", type=Path, help="Directory containing one day's FITS files.")
     parser.add_argument("--s3-prefix", help="S3 prefix to scan, for example s3://nasa-irsa-spherex/qr2/level2/...")
@@ -78,9 +78,13 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = build_parser().parse_args(argv)
+    parser = build_parser()
+    args = parser.parse_args(argv)
     observing_date = date.fromisoformat(args.date)
-    output = args.output or Path(f"spherex_helium_{observing_date:%Y%m%d}.png")
+    if args.data_source == "current" and args.s3_root_prefix != "qr2/level2":
+        parser.error("--s3-root-prefix applies to --data-source auto, not current")
+    suffix = "_dr1_qr3" if args.data_source == "current" else ""
+    output = args.output or Path(f"spherex_helium_{observing_date:%Y%m%d}{suffix}.png")
     config = RunConfig(
         observing_date=observing_date,
         output_path=output,

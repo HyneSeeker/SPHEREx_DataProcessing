@@ -61,7 +61,51 @@ You can also run directly from the source tree without installing:
 PYTHONPATH=src python3 -m spherex_helium.cli --help
 ```
 
-## Recommended Command
+## Current archive workflow: DR1 + QR3
+
+IRSA recommends **DR1 and QR3 Level 2 single exposures** for new work. Opt
+into the new discovery path on this branch:
+
+```bash
+spherex-helium 2025-12-21 --data-source current \
+  --save-csv he_20251221_dr1_qr3.csv
+```
+
+This searches both releases for the requested UT day without assuming a hard
+date cutoff. For duplicate exposures, the full exposure/detector identity
+is preserved, the processing suffix is ignored for matching, and DR1 is
+preferred over QR3. Within a release, the highest pipeline version and then
+latest processing date take precedence. The output CSV's `uri` contains the
+selected release and version. The optional `--max-files` limit applies **after**
+deduplication and is not intended for scientific analysis.
+
+The original `--data-source auto` default is unchanged and still uses QR2.
+Use a distinct output name when comparing calibrations. With no `--output`,
+current mode writes `spherex_helium_YYYYMMDD_dr1_qr3.png`, separate from the
+legacy filename. You can also isolate one release for a comparison by using
+`--data-source auto --s3-root-prefix dr1/level2` or
+`--data-source auto --s3-root-prefix qr3/level2` and naming the outputs explicitly:
+
+```bash
+spherex-helium 2026-05-21 --data-source auto --s3-root-prefix qr3/level2 \
+  -o he_20260521_qr3.png --save-csv he_20260521_qr3.csv
+```
+
+QR2 is no longer searchable through SIA2; IRSA lists QR2 direct downloads
+through February 2027. If using SIA2 explicitly, select `spherex_dr1` or
+`spherex_qr3` with `--data-source sia --collection NAME`, or the corresponding
+`_deep` collection for deep fields. Use current S3 mode to search both releases
+together. See the [IRSA release notes](https://irsa.ipac.caltech.edu/spherex-archive-documentation/spherex-data-releases/)
+and [access guide](https://irsa.ipac.caltech.edu/spherex-archive-documentation/spherex-data-access/).
+
+This changes archive selection, not the Gaussian fit, flags, or Rayleigh
+conversion. For a calibration comparison, match the same exposures between
+releases and do not combine QR2 intensities blindly with DR1/QR3. DR1/QR3 FITS
+headers can include the mission's He I template coefficient `HE_AG_AMPL` and
+fit quality `HE_AG_CHI2R`; the coefficient is not a Rayleigh intensity. The
+All-Sky Cube does not retain the single-exposure time series used here.
+
+## Legacy QR2 Command
 
 For a full `2025-12-21` band 1 run:
 

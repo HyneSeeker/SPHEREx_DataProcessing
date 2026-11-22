@@ -18,6 +18,10 @@ IRSA_SIA_URL = "https://irsa.ipac.caltech.edu/SIA"
 SPHEREX_BUCKET = "nasa-irsa-spherex"
 S3_XML_NS = {"s3": "http://s3.amazonaws.com/doc/2006-03-01/"}
 BAND1_DETECTOR_PREFIX = "1"
+CURRENT_S3_RELEASES = ("dr1", "qr3")
+LEVEL2_FILENAME_RE = re.compile(
+    r"^(level2_\d{4}W\d{2}_[^_]+_\d+_\d+D\d+)_spx_l2b-v(\d+)-(\d{4})-(\d{3})\.fits$"
+)
 
 
 def discover_observation_uris(
@@ -51,6 +55,14 @@ def discover_observation_uris(
             observing_date,
             bucket=s3_bucket,
             root_prefix=s3_root_prefix,
+            week_padding=s3_planning_period_week_padding,
+            timeout_s=timeout_s,
+            max_files=max_files,
+        )
+    if data_source == "current":
+        return discover_current_s3_by_date(
+            observing_date,
+            bucket=s3_bucket,
             week_padding=s3_planning_period_week_padding,
             timeout_s=timeout_s,
             max_files=max_files,
@@ -92,7 +104,7 @@ def discover_s3_by_date(
     timeout_s: float = 120.0,
     max_files: int | None = None,
 ) -> list[str]:
-    """Discover public SPHEREx QR2 FITS files for one UT date from S3.
+    """Discover public SPHEREx Level 2 FITS files for one UT date from S3.
 
     The S3 layout is organized by planning period, not observation date. We
     therefore inspect nearby ISO-week planning-period prefixes and filter each
@@ -123,6 +135,42 @@ def discover_s3_by_date(
             if max_files is not None and len(uris) >= max_files:
                 return sorted(uris)
     return sorted(uris)
+
+
+def discover_current_s3_by_date(
+    observing_date: date,
+    *,
+    bucket: str = SPHEREX_BUCKET,
+    week_padding: int = 1,
+    timeout_s: float = 120.0,
+    max_files: int | None = None,
+) -> list[str]:
+    """Discover DR1 and QR3 Band 1 exposures, retaining DR1 on overlap.
+
+    Find every matching candidate before applying the optional smoke-test limit
+    so that multiple processing versions cannot consume the file quota.
+    Surface archive errors instead of returning a silently incomplete union.
+    """
+    selected: dict[str, tuple[tuple[int, int, int, int], str]] = {}
+    for priority, release in enumerate(CURRENT_S3_RELEASES[::-1]):
+        uris = discover_s3_by_date(
+            observing_date,
+            bucket=bucket,
+            root_prefix=f"{release}/level2",
+            week_padding=week_padding,
+            timeout_s=timeout_s,
+        )
+        for uri in uris:
+            filename = urlparse(uri).path.rsplit("/", 1)[-1]
+            match = LEVEL2_FILENAME_RE.fullmatch(filename)
+            if match is None:
+                raise ValueError(f"Unrecognized SPHEREx Level 2 filename: {filename}")
+            stable_id, version, year, day = match.groups()
+            candidate = ((priority, int(version), int(year), int(day)), uri)
+            if stable_id not in selected or candidate > selected[stable_id]:
+                selected[stable_id] = candidate
+    ordered = [selected[stable_id][1] for stable_id in sorted(selected)]
+    return ordered[:max_files]
 
 
 def _discover_s3_period_date_uris(
