@@ -61,7 +61,15 @@ def run_day(config: RunConfig) -> DayResult:
         orbit_matches = _match_uris_by_horizons_orbit(uris, horizons, config)
         north_count = sum(1 for record in orbit_matches.values() if _label_for_orbit_record(record, config) == "North")
         south_count = sum(1 for record in orbit_matches.values() if _label_for_orbit_record(record, config) == "South")
-        _progress_message(config, f"Horizons polar labels: North={north_count}, South={south_count}, Other={len(uris) - len(orbit_matches)}")
+        # Current-mode summary counts non-polar matches and unmatched inputs as Other.
+        # Preserve the legacy display while leaving classification unchanged in both modes.
+        other_count = len(uris) - (
+            north_count + south_count if config.data_source == "current" else len(orbit_matches)
+        )
+        _progress_message(
+            config,
+            f"Horizons polar labels: North={north_count}, South={south_count}, Other={other_count}",
+        )
 
     def process_one(uri: str):
         orbit_record = orbit_matches.get(uri)

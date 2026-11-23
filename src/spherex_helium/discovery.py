@@ -20,7 +20,7 @@ S3_XML_NS = {"s3": "http://s3.amazonaws.com/doc/2006-03-01/"}
 BAND1_DETECTOR_PREFIX = "1"
 CURRENT_S3_RELEASES = ("dr1", "qr3")
 LEVEL2_FILENAME_RE = re.compile(
-    r"^(level2_\d{4}W\d{2}_[^_]+_\d+_\d+D\d+)_spx_l2b-v(\d+)-(\d{4})-(\d{3})\.fits$"
+    r"^(level2_\d{4}W\d{2}_[^_]+_\d+_\d+D\d+)_spx_l2b(?:_retry)?-v(\d+)-(\d{4})-(\d{3})\.fits$"
 )
 
 

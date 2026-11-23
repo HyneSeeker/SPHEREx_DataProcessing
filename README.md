@@ -73,11 +73,19 @@ spherex-helium 2025-12-21 --data-source current \
 
 This searches both releases for the requested UT day without assuming a hard
 date cutoff. For duplicate exposures, the full exposure/detector identity
-is preserved, the processing suffix is ignored for matching, and DR1 is
+is preserved, normal and `l2b_retry` processing suffixes are ignored for matching, and DR1 is
 preferred over QR3. Within a release, the highest pipeline version and then
 latest processing date take precedence. The output CSV's `uri` contains the
 selected release and version. The optional `--max-files` limit applies **after**
 deduplication and is not intended for scientific analysis.
+
+Date discovery uses FITS header dates in S3 filename order. It assumes
+chronological ordering and readable timestamps within each version prefix.
+For completeness-sensitive runs, compare against an independent IRSA
+Band 1 day listing (including adjacent-day boundary exposures, selected by
+`DATE-AVG`) or pass a checked URI list via `--data-source manifest --manifest PATH`.
+Horizons progress counts in current mode describe classification before
+fitting; the number of successful fits can be lower.
 
 The original `--data-source auto` default is unchanged and still uses QR2.
 Use a distinct output name when comparing calibrations. With no `--output`,
